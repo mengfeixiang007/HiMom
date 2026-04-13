@@ -1,70 +1,41 @@
 /**
- * Vercel Serverless Function - AI Image Description
- * This function handles POST requests to /api/describe
+ * 本地测试云函数
+ * 模拟前端请求测试云函数
  */
 
 const https = require('https');
+const fs = require('fs');
 
-module.exports = async (req, res) => {
-    // Set CORS headers
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+// API Key
+const API_KEY = 'sk-74ab4c8314f74bc481a9001154e5413c';
 
-    // Handle CORS preflight
-    if (req.method === 'OPTIONS') {
-        res.status(200).end();
-        return;
-    }
+console.log('=== 本地测试云函数 ===\n');
 
-    // Only accept POST requests
-    if (req.method !== 'POST') {
-        res.status(405).json({ error: 'Method not allowed. Use POST.' });
-        return;
-    }
+// 创建一个测试图片（读取一个小图片文件，或者使用 base64）
+// 这里使用一个真实的测试图片 base64（一个小的红色方块）
+const testImageBase64 = '/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AKp//2Q==';
 
-    try {
-        console.log('=== HiMom Vercel Function Started ===');
-
-        // Parse request body
-        const { image } = req.body;
-
-        if (!image) {
-            res.status(400).json({
-                error: 'Missing image in request body'
-            });
-            return;
-        }
-
-        console.log('Image received, length:', image.length);
-
-        // API Key - 直接使用
-        const apiKey = 'sk-74ab4c8314f74bc481a9001154e5413c';
-        console.log('Using API Key:', apiKey.substring(0, 8) + '...');
-
-        // Extract pure base64 data
-        const pureBase64 = image.replace(/^data:image\/jpeg;base64,/, '');
-
-        // Call Qwen VL API
-        const description = await callQwenVL(pureBase64, apiKey);
-
-        console.log('Success! Description:', description);
-
-        // Return result
-        res.status(200).json({
-            description: description
-        });
-
-    } catch (error) {
-        console.error('Error:', error);
-        res.status(500).json({
-            error: 'Internal server error: ' + error.message
-        });
-    }
+// 构造请求体
+const requestBody = {
+    image: 'data:image/jpeg;base64,' + testImageBase64
 };
 
+console.log('正在调用云函数...');
+console.log('图片大小:', testImageBase64.length, 'bytes');
+console.log('');
+
+// 调用 Qwen VL API（和云函数一样的逻辑）
+callQwenVL(testImageBase64, API_KEY)
+    .then(description => {
+        console.log('✅ 成功！');
+        console.log('AI 描述:', description);
+    })
+    .catch(error => {
+        console.error('❌ 失败:', error.message);
+    });
+
 /**
- * Call Qwen VL Plus API
+ * Call Qwen VL Plus API for image description
  */
 function callQwenVL(base64Image, apiKey) {
     return new Promise((resolve, reject) => {
@@ -101,7 +72,7 @@ function callQwenVL(base64Image, apiKey) {
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${apiKey}`,
-                'User-Agent': 'HiMom-Vercel/1.0'
+                'User-Agent': 'HiMom-Test/1.0'
             }
         };
 
@@ -118,7 +89,7 @@ function callQwenVL(base64Image, apiKey) {
 
                     if (parsedResponse.code || parsedResponse.error_code) {
                         const errorMsg = parsedResponse.message || parsedResponse.error_message || 'Unknown API error';
-                        reject(new Error(`Qwen API Error: ${errorMsg}`));
+                        reject(new Error(`API Error: ${errorMsg}`));
                         return;
                     }
 
@@ -141,25 +112,25 @@ function callQwenVL(base64Image, apiKey) {
                     }
 
                     if (!description) {
-                        reject(new Error('No description found in API response'));
+                        reject(new Error('No description found in response'));
                         return;
                     }
 
                     resolve(description.trim());
 
                 } catch (parseError) {
-                    reject(new Error(`Failed to parse API response: ${parseError.message}`));
+                    reject(new Error(`Parse error: ${parseError.message}`));
                 }
             });
         });
 
         req.on('error', (error) => {
-            reject(new Error(`HTTP request failed: ${error.message}`));
+            reject(new Error(`Request failed: ${error.message}`));
         });
 
         req.setTimeout(30000, () => {
             req.destroy();
-            reject(new Error('Request timeout'));
+            reject(new Error('Timeout'));
         });
 
         req.write(JSON.stringify(requestBody));
