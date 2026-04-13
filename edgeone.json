@@ -7,13 +7,18 @@
   "environmentVariables": {
     "DASHSCOPE_API_KEY": {
       "description": "Your DashScope API key for Qwen VL (get from https://dashscope.console.aliyun.com/)",
-      "required": true
+      "required": true,
+      "value": "sk-87f8d54433844a29872181da96ae8002"
     }
   },
-  "routes": [
-    {
-      "src": "/api/describe",
-      "dest": "/functions/api/describe.js"
+  "functions": {
+    "cloud-functions": {
+      "routes": [
+        {
+          "path": "/api/describe",
+          "handler": "cloud-functions/api/describe.onRequest"
+        }
+      ]
     }
-  ]
+  }
 }
