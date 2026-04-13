@@ -1,5 +1,5 @@
 /**
- * EdgeOne Pages Cloud Function - AI Image Description
+ * EdgeOne Cloud Function - AI Image Description
  * Receives image as Base64, calls Qwen VL API, returns English description
  */
 
@@ -12,8 +12,12 @@ const https = require('https');
  */
 exports.onRequest = async (event) => {
     try {
+        console.log('=== HiMom Cloud Function Started ===');
+        console.log('Event:', JSON.stringify(event, null, 2));
+        
         // Only accept POST requests
-        if (event.request.method !== 'POST') {
+        if (event.request && event.request.method !== 'POST') {
+            console.log('Method not allowed:', event.request.method);
             return {
                 statusCode: 405,
                 headers: {
@@ -31,30 +35,52 @@ exports.onRequest = async (event) => {
         // Parse request body
         let requestBody = '';
         
-        // Handle different ways the body might be provided
-        if (event.body) {
-            requestBody = typeof event.body === 'string' ? event.body : JSON.stringify(event.body);
-        } else if (event.request.body) {
-            // If body is a stream, collect it
-            if (typeof event.request.body.on === 'function') {
-                requestBody = await new Promise((resolve, reject) => {
-                    let data = '';
-                    event.request.body.on('data', chunk => {
-                        data += chunk;
-                    });
-                    event.request.body.on('end', () => resolve(data));
-                    event.request.body.on('error', reject);
-                });
-            } else {
+        try {
+            // Handle different ways the body might be provided
+            if (event.body) {
+                requestBody = typeof event.body === 'string' ? event.body : JSON.stringify(event.body);
+            } else if (event.request && event.request.body) {
                 requestBody = event.request.body;
+            } else {
+                throw new Error('No request body found');
             }
+            
+            console.log('Request body received, length:', requestBody.length);
+        } catch (parseError) {
+            console.error('Failed to parse request body:', parseError);
+            return {
+                statusCode: 400,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                body: JSON.stringify({
+                    error: 'Invalid request body: ' + parseError.message
+                })
+            };
         }
 
-        const parsedBody = JSON.parse(requestBody);
+        let parsedBody;
+        try {
+            parsedBody = typeof requestBody === 'string' ? JSON.parse(requestBody) : requestBody;
+        } catch (e) {
+            return {
+                statusCode: 400,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                body: JSON.stringify({
+                    error: 'Invalid JSON in request body'
+                })
+            };
+        }
+        
         const base64Image = parsedBody.image;
 
         // Validate input
         if (!base64Image) {
+            console.error('No image provided in request');
             return {
                 statusCode: 400,
                 headers: {
@@ -67,11 +93,15 @@ exports.onRequest = async (event) => {
             };
         }
 
-        // Get API key from environment variable
-        const apiKey = process.env.DASHSCOPE_API_KEY;
+        console.log('Image received, length:', base64Image.length);
+
+        // Get API key - 直接使用 API Key（测试用）
+        const apiKey = 'sk-74ab4c8314f74bc481a9001154e5413c';
+        
+        console.log('API Key configured: Yes (starts with ' + apiKey.substring(0, 5) + '...)');
         
         if (!apiKey) {
-            console.error('DASHSCOPE_API_KEY not configured');
+            console.error('DASHSCOPE_API_KEY not configured in environment variables');
             return {
                 statusCode: 500,
                 headers: {
@@ -79,16 +109,34 @@ exports.onRequest = async (event) => {
                     'Access-Control-Allow-Origin': '*'
                 },
                 body: JSON.stringify({
-                    error: 'Server configuration error: API key not set'
+                    error: 'Server configuration error: API key not set. Please configure DASHSCOPE_API_KEY environment variable.'
                 })
             };
         }
 
         // Extract pure base64 data (remove data:image/jpeg;base64, prefix if present)
         const pureBase64 = base64Image.replace(/^data:image\/jpeg;base64,/, '');
+        console.log('Pure base64 length:', pureBase64.length);
 
         // Call Qwen VL API
-        const description = await callQwenVL(pureBase64, apiKey);
+        let description;
+        try {
+            description = await callQwenVL(pureBase64, apiKey);
+            console.log('Successfully got description:', description);
+        } catch (apiError) {
+            console.error('Qwen VL API call failed:', apiError);
+            return {
+                statusCode: 502,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                body: JSON.stringify({
+                    error: 'AI API call failed: ' + apiError.message,
+                    details: apiError.toString()
+                })
+            };
+        }
 
         // Return successful response
         return {
@@ -105,7 +153,9 @@ exports.onRequest = async (event) => {
         };
 
     } catch (error) {
-        console.error('Error in describe function:', error);
+        console.error('=== Unhandled Error in describe function ===');
+        console.error('Error:', error);
+        console.error('Stack:', error.stack);
         
         return {
             statusCode: 500,
@@ -114,7 +164,8 @@ exports.onRequest = async (event) => {
                 'Access-Control-Allow-Origin': '*'
             },
             body: JSON.stringify({
-                error: error.message || 'Internal server error'
+                error: 'Internal server error: ' + error.message,
+                stack: error.stack
             })
         };
     }
@@ -154,6 +205,8 @@ function callQwenVL(base64Image, apiKey) {
             }
         };
 
+        console.log('Calling Qwen VL API...');
+
         // Prepare HTTP request options
         const options = {
             hostname: 'dashscope.aliyuncs.com',
@@ -163,13 +216,18 @@ function callQwenVL(base64Image, apiKey) {
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${apiKey}`,
-                'User-Agent': 'HiMom-App/1.0'
+                'User-Agent': 'HiMom-App/1.0',
+                'X-DashScope-SSE': 'disable'
             }
         };
+
+        console.log('Request options:', options.hostname + options.path);
 
         // Make the HTTPS request
         const req = https.request(options, (res) => {
             let responseData = '';
+
+            console.log('Response status code:', res.statusCode);
 
             res.on('data', (chunk) => {
                 responseData += chunk;
@@ -177,18 +235,20 @@ function callQwenVL(base64Image, apiKey) {
 
             res.on('end', () => {
                 try {
+                    console.log('Response received, length:', responseData.length);
+                    
                     // Parse the response
                     const parsedResponse = JSON.parse(responseData);
 
                     // Check for errors in the response
                     if (parsedResponse.code || parsedResponse.error_code) {
                         const errorMsg = parsedResponse.message || parsedResponse.error_message || 'Unknown API error';
+                        console.error('Qwen API returned error:', errorMsg);
                         reject(new Error(`Qwen API Error: ${errorMsg}`));
                         return;
                     }
 
                     // Extract the description from the response
-                    // The exact path depends on Qwen API response structure
                     let description = '';
                     
                     if (parsedResponse.output && 
@@ -210,17 +270,20 @@ function callQwenVL(base64Image, apiKey) {
                     }
 
                     if (!description) {
+                        console.error('No description found in API response');
+                        console.error('Full response:', JSON.stringify(parsedResponse, null, 2));
                         reject(new Error('No description found in API response'));
                         return;
                     }
 
-                    // Clean up the description (remove extra whitespace, quotes, etc.)
+                    // Clean up the description
                     description = description.trim().replace(/^["']|["']$/g, '');
                     
                     console.log('Generated description:', description);
                     resolve(description);
 
                 } catch (parseError) {
+                    console.error('Failed to parse API response:', parseError);
                     reject(new Error(`Failed to parse API response: ${parseError.message}`));
                 }
             });
@@ -228,17 +291,20 @@ function callQwenVL(base64Image, apiKey) {
 
         // Handle request errors
         req.on('error', (error) => {
+            console.error('HTTP request error:', error);
             reject(new Error(`HTTP request failed: ${error.message}`));
         });
 
         // Set timeout
         req.setTimeout(30000, () => {
             req.destroy();
-            reject(new Error('Request timeout'));
+            reject(new Error('Request timeout after 30 seconds'));
         });
 
         // Write request body
-        req.write(JSON.stringify(requestBody));
+        const bodyString = JSON.stringify(requestBody);
+        console.log('Sending request body, length:', bodyString.length);
+        req.write(bodyString);
         req.end();
     });
 }
