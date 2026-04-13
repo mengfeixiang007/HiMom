@@ -1,0 +1,19 @@
+{
+  "name": "Hi'Mom",
+  "description": "AI-Powered Visual Learning Assistant for Toddlers",
+  "buildCommand": "",
+  "outputDirectory": ".",
+  "installCommand": "",
+  "environmentVariables": {
+    "DASHSCOPE_API_KEY": {
+      "description": "Your DashScope API key for Qwen VL (get from https://dashscope.console.aliyun.com/)",
+      "required": true
+    }
+  },
+  "routes": [
+    {
+      "src": "/api/describe",
+      "dest": "/functions/api/describe.js"
+    }
+  ]
+}

@@ -1,0 +1,243 @@
+/* ============================================
+   Global Styles & Reset
+   ============================================ */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #000000;
+    color: #ffffff;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+}
+
+/* ============================================
+   Camera Video Element
+   ============================================ */
+#camera-feed {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Fill the entire screen, cropping if necessary */
+    display: block;
+}
+
+/* ============================================
+   Loading Overlay
+   Semi-transparent overlay with spinner
+   ============================================ */
+#loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    transition: opacity 0.3s ease;
+}
+
+#loading-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.loading-spinner {
+    width: 60px;
+    height: 60px;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top: 4px solid #ffffff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+    margin-top: 20px;
+    font-size: 18px;
+    color: #ffffff;
+    text-align: center;
+}
+
+/* ============================================
+   Subtitle Container
+   Displayed at bottom of screen
+   ============================================ */
+#subtitle-container {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: 90%;
+    background-color: rgba(0, 0, 0, 0.7);
+    padding: 15px 25px;
+    border-radius: 25px;
+    text-align: center;
+    z-index: 100;
+    transition: opacity 0.3s ease;
+}
+
+#subtitle-container.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+#subtitle-text {
+    font-size: 16px;
+    line-height: 1.5;
+    color: #ffffff;
+    margin: 0;
+}
+
+/* ============================================
+   Status Icon (Ear Emoji)
+   Bottom right corner indicator
+   ============================================ */
+#status-icon {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    font-size: 40px;
+    opacity: 0.5;
+    cursor: pointer;
+    z-index: 100;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+/* Rotation animation when active */
+#status-icon.active {
+    animation: rotate 0.6s ease-in-out;
+    opacity: 0.8;
+}
+
+@keyframes rotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ============================================
+   Permission Denied Message
+   ============================================ */
+#permission-denied {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    padding: 30px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    max-width: 80%;
+    z-index: 2000;
+}
+
+#permission-denied.hidden {
+    display: none;
+}
+
+#permission-denied p {
+    font-size: 16px;
+    margin-bottom: 10px;
+    line-height: 1.5;
+}
+
+/* ============================================
+   iOS Warning Message
+   ============================================ */
+#ios-warning {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    padding: 30px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    max-width: 80%;
+    z-index: 2000;
+}
+
+#ios-warning.hidden {
+    display: none;
+}
+
+#ios-warning p {
+    font-size: 16px;
+    margin-bottom: 10px;
+    line-height: 1.5;
+}
+
+/* ============================================
+   Offline Message
+   ============================================ */
+#offline-message {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    padding: 30px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    max-width: 80%;
+    z-index: 2000;
+}
+
+#offline-message.hidden {
+    display: none;
+}
+
+#offline-message p {
+    font-size: 16px;
+    margin-bottom: 10px;
+    line-height: 1.5;
+}
+
+/* ============================================
+   Utility Classes
+   ============================================ */
+.hidden {
+    display: none !important;
+}
+
+/* ============================================
+   Responsive Adjustments
+   ============================================ */
+@media (max-width: 480px) {
+    #subtitle-container {
+        bottom: 70px;
+        padding: 12px 20px;
+    }
+    
+    #subtitle-text {
+        font-size: 14px;
+    }
+    
+    #status-icon {
+        font-size: 35px;
+        bottom: 15px;
+        right: 15px;
+    }
+    
+    .loading-spinner {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .loading-text {
+        font-size: 16px;
+    }
+}

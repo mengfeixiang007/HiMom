@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#000000">
+    <meta name="description" content="Hi'Mom - An AI-powered visual learning assistant for toddlers">
+    
+    <!-- iOS PWA meta tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Hi'Mom">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- iOS icon (will be replaced with actual icon later) -->
+    <link rel="apple-touch-icon" href="/icons/icon-192.png">
+    
+    <title>Hi'Mom</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Main video element for camera preview -->
+    <video id="camera-feed" autoplay playsinline muted></video>
+    
+    <!-- Loading indicator overlay -->
+    <div id="loading-overlay" class="hidden">
+        <div class="loading-spinner"></div>
+        <p class="loading-text">Looking...</p>
+    </div>
+    
+    <!-- Subtitle display area -->
+    <div id="subtitle-container" class="hidden">
+        <p id="subtitle-text"></p>
+    </div>
+    
+    <!-- Status icon (ear emoji) in bottom right corner -->
+    <div id="status-icon">👂</div>
+    
+    <!-- Permission denied message -->
+    <div id="permission-denied" class="hidden">
+        <p>Camera access is needed for this app to work.</p>
+        <p>Please allow camera permissions and refresh the page.</p>
+    </div>
+    
+    <!-- iOS compatibility warning -->
+    <div id="ios-warning" class="hidden">
+        <p>For best experience on iOS:</p>
+        <p>Please use Safari and add to Home Screen</p>
+    </div>
+    
+    <!-- Offline fallback container -->
+    <div id="offline-message" class="hidden">
+        <p>You're offline.</p>
+        <p>Please check your internet connection.</p>
+    </div>
+    
+    <script type="module" src="script.js"></script>
+</body>
+</html>
